@@ -1,0 +1,18 @@
+local orderInventoryKey = KEYS[1];
+
+-- 从hash表从取出当前库存的可售数量、预占数量、占有数量
+local values = redis.call('HMGET', orderInventoryKey, ARGV[1],ARGV[2],ARGV[3]);
+
+-- 修改增量变化
+local sNewValue = values[1] + ARGV[4];
+local wNewValue = values[2] + ARGV[5];
+local oNewValue = values[3] + ARGV[6];
+
+-- 加完后如果小于0，证明库存不足了
+if sNewValue < 0 or wNewValue < 0 or oNewValue < 0 then
+	return false;
+end;
+
+-- 修改库存
+redis.call('HMSET', orderInventoryKey, ARGV[1],ARGV[2],ARGV[3],sNewValue,wNewValue,oNewValue);
+return true;
